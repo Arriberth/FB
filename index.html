@@ -335,7 +335,155 @@ function toCSV(rows){return rows.map(r=>r.map(csvEscape).join(',')).join('\n');}
 function downloadFile(name,content,type='text/csv'){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
 function exportCSV(type){let rows=[];if(type==='balances'){rows=[['Player','Parent','Charged','Paid','Outstanding'],...db.players.map(p=>{const b=playerBalance(p.id);return[playerName(p.id),p.parent,b.charged,b.paid,b.balance];})];}if(type==='charges'){rows=[['Player','Name','Type','Due','Amount','Paid','Outstanding','Notes'],...db.charges.map(c=>[playerName(c.playerId),c.name,c.type,c.due,c.amount,chargePaid(c.id),chargeBalance(c),c.notes])];}if(type==='payments'){rows=[['Date','Player','Amount','Method','Reference','Source'],...db.payments.map(p=>[p.date,playerName(p.playerId),p.amount,p.method,p.ref,p.source])];}if(type==='expenses'){rows=[['Date','Description','Category','Amount','Paid by','Source'],...db.expenses.map(e=>[e.date,e.desc,e.cat,e.amount,e.paidby,e.source])];}if(type==='outstanding'){rows=[['Player','Charge','Due','Amount','Paid','Outstanding'],...db.charges.filter(c=>chargeBalance(c)>0.009).map(c=>[playerName(c.playerId),c.name,c.due,c.amount,chargePaid(c.id),chargeBalance(c)])];}downloadFile(`football_${type}_${today()}.csv`,toCSV(rows));}
 load();autoAllocateAll();renderAll();
-</script>
+<script>
+/* Clean mobile menu and page navigation fix */
+
+(function () {
+  function getMenu() {
+    return (
+      document.querySelector('.sidebar') ||
+      document.querySelector('.app-nav') ||
+      document.querySelector('.side-nav') ||
+      document.querySelector('.mobile-nav') ||
+      document.querySelector('nav')
+    );
+  }
+
+  function showPage(pageId) {
+    if (!pageId) return;
+
+    var targetPage = document.getElementById('page-' + pageId);
+    if (!targetPage) {
+      console.warn('Page not found: page-' + pageId);
+      return;
+    }
+
+    document.querySelectorAll('.page').forEach(function (page) {
+      page.classList.remove('active');
+      page.style.display = 'none';
+    });
+
+    targetPage.classList.add('active');
+    targetPage.style.display = 'block';
+
+    document.querySelectorAll('.nav-btn').forEach(function (btn) {
+      btn.classList.remove('active');
+    });
+
+    document.querySelectorAll('.nav-btn[data-page="' + pageId + '"]').forEach(function (btn) {
+      btn.classList.add('active');
+    });
+
+    closeMenu();
+
+    setTimeout(function () {
+      window.scrollTo(0, 0);
+    }, 50);
+  }
+
+  function openMenu() {
+    var menu = getMenu();
+    if (!menu) return;
+
+    document.body.classList.add('menu-open');
+    menu.classList.add('menu-visible');
+    menu.style.display = 'block';
+    menu.style.transform = 'translateX(0)';
+  }
+
+  function closeMenu() {
+    var menu = getMenu();
+    if (!menu) return;
+
+    document.body.classList.remove('menu-open');
+    menu.classList.remove('menu-visible');
+
+    if (window.innerWidth <= 900) {
+      menu.style.transform = 'translateX(-110%)';
+    }
+  }
+
+  function toggleMenu() {
+    if (document.body.classList.contains('menu-open')) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  }
+
+  function setupNavigation() {
+    document.addEventListener('click', function (e) {
+      var menuToggle = e.target.closest(
+        '.menu-toggle, .hamburger, .mobile-toggle, .nav-toggle, [data-menu-toggle]'
+      );
+
+      if (menuToggle) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleMenu();
+        return;
+      }
+
+      var navButton = e.target.closest('.nav-btn[data-page]');
+      if (navButton) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var pageId = navButton.getAttribute('data-page');
+        showPage(pageId);
+        return;
+      }
+    });
+
+    document.addEventListener(
+      'touchend',
+      function (e) {
+        var menuToggle = e.target.closest(
+          '.menu-toggle, .hamburger, .mobile-toggle, .nav-toggle, [data-menu-toggle]'
+        );
+
+        if (menuToggle) {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleMenu();
+          return;
+        }
+
+        var navButton = e.target.closest('.nav-btn[data-page]');
+        if (navButton) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          var pageId = navButton.getAttribute('data-page');
+          showPage(pageId);
+          return;
+        }
+      },
+      { passive: false }
+    );
+
+    var activeButton = document.querySelector('.nav-btn.active');
+    var firstButton = document.querySelector('.nav-btn[data-page]');
+
+    if (activeButton) {
+      showPage(activeButton.getAttribute('data-page'));
+    } else if (firstButton) {
+      showPage(firstButton.getAttribute('data-page'));
+    }
+
+    window.showPage = showPage;
+    window.openMenu = openMenu;
+    window.closeMenu = closeMenu;
+    window.toggleMenu = toggleMenu;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupNavigation);
+  } else {
+    setupNavigation();
+  }
+})();
+</script></script>
   <script>
 /* Mobile menu + page navigation fix */
 
