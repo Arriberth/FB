@@ -337,4 +337,92 @@ function exportCSV(type){let rows=[];if(type==='balances'){rows=[['Player','Pare
 load();autoAllocateAll();renderAll();
 </script>
 </body>
+  <script>
+/* Mobile-friendly page navigation fix */
+
+(function () {
+  function showPage(pageId) {
+    if (!pageId) return;
+
+    // Hide all pages
+    document.querySelectorAll('.page').forEach(function (page) {
+      page.classList.remove('active');
+      page.style.display = 'none';
+    });
+
+    // Show selected page
+    var targetPage = document.getElementById('page-' + pageId);
+    if (targetPage) {
+      targetPage.classList.add('active');
+      targetPage.style.display = 'block';
+    }
+
+    // Update nav active state
+    document.querySelectorAll('.nav-btn').forEach(function (btn) {
+      btn.classList.remove('active');
+    });
+
+    var activeButton = document.querySelector('.nav-btn[data-page="' + pageId + '"]');
+    if (activeButton) {
+      activeButton.classList.add('active');
+    }
+
+    // Scroll back to top on mobile
+    try {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    } catch (e) {
+      window.scrollTo(0, 0);
+    }
+  }
+
+  function setupNavigation() {
+    var navButtons = document.querySelectorAll('.nav-btn');
+
+    navButtons.forEach(function (btn) {
+      var pageId = btn.getAttribute('data-page');
+
+      btn.onclick = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showPage(pageId);
+        return false;
+      };
+
+      btn.addEventListener(
+        'touchend',
+        function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          showPage(pageId);
+          return false;
+        },
+        { passive: false }
+      );
+    });
+
+    // Make sure one page is visible on load
+    var currentActiveBtn = document.querySelector('.nav-btn.active');
+    var firstBtn = document.querySelector('.nav-btn');
+
+    if (currentActiveBtn && currentActiveBtn.getAttribute('data-page')) {
+      showPage(currentActiveBtn.getAttribute('data-page'));
+    } else if (firstBtn && firstBtn.getAttribute('data-page')) {
+      showPage(firstBtn.getAttribute('data-page'));
+    } else {
+      showPage('dashboard');
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupNavigation);
+  } else {
+    setupNavigation();
+  }
+
+  window.showPage = showPage;
+})();
+</script>
 </html>
