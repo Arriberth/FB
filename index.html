@@ -670,6 +670,302 @@ load();autoAllocateAll();renderAll();
   }
 })();
 </script>
+  <style>
+/* Emergency stable mobile navigation */
+
+#hawksMobileMenuButton {
+  display: none;
+}
+
+#hawksMobileDrawer {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  #hawksMobileMenuButton {
+    display: block !important;
+    position: fixed !important;
+    top: 12px !important;
+    right: 12px !important;
+    z-index: 999999 !important;
+    background: #e31b23 !important;
+    color: #ffffff !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    padding: 11px 16px !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35) !important;
+  }
+
+  #hawksMobileDrawer {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 82% !important;
+    max-width: 320px !important;
+    z-index: 999998 !important;
+    background: #070b12 !important;
+    border-left: 1px solid rgba(255,255,255,0.15) !important;
+    box-shadow: -12px 0 30px rgba(0,0,0,0.45) !important;
+    padding: 72px 16px 18px 16px !important;
+    transform: translateX(110%) !important;
+    transition: transform 0.22s ease !important;
+    overflow-y: auto !important;
+  }
+
+  body.hawks-menu-open #hawksMobileDrawer {
+    transform: translateX(0) !important;
+  }
+
+  #hawksMobileDrawer button {
+    width: 100% !important;
+    display: block !important;
+    margin: 0 0 10px 0 !important;
+    padding: 13px 14px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255,255,255,0.14) !important;
+    background: rgba(255,255,255,0.06) !important;
+    color: #ffffff !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    text-align: left !important;
+  }
+
+  #hawksMobileDrawer button.active {
+    background: #e31b23 !important;
+    border-color: #e31b23 !important;
+  }
+
+  .page {
+    display: none !important;
+  }
+
+  .page.hawks-page-visible {
+    display: block !important;
+  }
+
+  body {
+    padding-top: 56px !important;
+    pointer-events: auto !important;
+  }
+}
+</style>
+
+<script>
+/* Emergency stable mobile navigation */
+
+(function () {
+  var pageLabels = {
+    dashboard: 'Dashboard',
+    players: 'Players',
+    charges: 'Charges',
+    payments: 'Payments',
+    expenses: 'Expenses',
+    games: 'Games',
+    chase: 'Chase fees',
+    settings: 'Settings',
+    reports: 'Reports',
+    bank: 'Bank import'
+  };
+
+  function getPages() {
+    return Array.prototype.slice.call(document.querySelectorAll('.page[id^="page-"]'));
+  }
+
+  function normalisePageId(id) {
+    return String(id || '').replace(/^page-/, '');
+  }
+
+  function labelForPage(pageId) {
+    return pageLabels[pageId] || pageId.charAt(0).toUpperCase() + pageId.slice(1).replace(/-/g, ' ');
+  }
+
+  function forceClickable() {
+    document.documentElement.style.pointerEvents = 'auto';
+    document.body.style.pointerEvents = 'auto';
+
+    document.querySelectorAll('*').forEach(function (el) {
+      if (window.getComputedStyle(el).pointerEvents === 'none') {
+        if (
+          el.id === 'hawksMobileMenuButton' ||
+          el.id === 'hawksMobileDrawer' ||
+          el.closest('#hawksMobileDrawer')
+        ) {
+          el.style.pointerEvents = 'auto';
+        }
+      }
+    });
+  }
+
+  function closeOldMenus() {
+    document.body.classList.remove(
+      'menu-open',
+      'nav-open',
+      'sidebar-open',
+      'drawer-open',
+      'mobile-menu-open'
+    );
+
+    document.documentElement.classList.remove(
+      'menu-open',
+      'nav-open',
+      'sidebar-open',
+      'drawer-open',
+      'mobile-menu-open'
+    );
+  }
+
+  function showPage(pageId) {
+    pageId = normalisePageId(pageId);
+
+    var pages = getPages();
+    var target = document.getElementById('page-' + pageId);
+
+    if (!target && pages.length) {
+      target = pages[0];
+      pageId = normalisePageId(target.id);
+    }
+
+    if (!target) {
+      console.warn('No page found for:', pageId);
+      return;
+    }
+
+    pages.forEach(function (page) {
+      page.classList.remove('active');
+      page.classList.remove('hawks-page-visible');
+      page.style.display = 'none';
+    });
+
+    target.classList.add('active');
+    target.classList.add('hawks-page-visible');
+    target.style.display = 'block';
+
+    document.querySelectorAll('.nav-btn[data-page]').forEach(function (btn) {
+      btn.classList.toggle('active', normalisePageId(btn.getAttribute('data-page')) === pageId);
+    });
+
+    document.querySelectorAll('#hawksMobileDrawer button[data-page]').forEach(function (btn) {
+      btn.classList.toggle('active', normalisePageId(btn.getAttribute('data-page')) === pageId);
+    });
+
+    document.body.classList.remove('hawks-menu-open');
+    closeOldMenus();
+
+    setTimeout(function () {
+      window.scrollTo(0, 0);
+    }, 40);
+  }
+
+  function buildMobileMenu() {
+    if (!document.getElementById('hawksMobileMenuButton')) {
+      var menuButton = document.createElement('button');
+      menuButton.id = 'hawksMobileMenuButton';
+      menuButton.type = 'button';
+      menuButton.textContent = 'Menu';
+      document.body.appendChild(menuButton);
+
+      menuButton.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.body.classList.toggle('hawks-menu-open');
+      });
+    }
+
+    var drawer = document.getElementById('hawksMobileDrawer');
+
+    if (!drawer) {
+      drawer = document.createElement('div');
+      drawer.id = 'hawksMobileDrawer';
+      document.body.appendChild(drawer);
+    }
+
+    drawer.innerHTML = '';
+
+    var existingButtons = Array.prototype.slice.call(document.querySelectorAll('.nav-btn[data-page]'));
+    var pages = getPages();
+
+    var pageIds = [];
+
+    if (existingButtons.length) {
+      existingButtons.forEach(function (btn) {
+        var pageId = normalisePageId(btn.getAttribute('data-page'));
+        if (pageId && pageIds.indexOf(pageId) === -1) pageIds.push(pageId);
+      });
+    } else {
+      pages.forEach(function (page) {
+        var pageId = normalisePageId(page.id);
+        if (pageId && pageIds.indexOf(pageId) === -1) pageIds.push(pageId);
+      });
+    }
+
+    if (!pageIds.length) {
+      pageIds = ['dashboard'];
+    }
+
+    pageIds.forEach(function (pageId) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('data-page', pageId);
+      b.textContent = labelForPage(pageId);
+
+      b.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showPage(pageId);
+      });
+
+      drawer.appendChild(b);
+    });
+  }
+
+  function bindExistingButtons() {
+    document.querySelectorAll('.nav-btn[data-page]').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showPage(btn.getAttribute('data-page'));
+      }, true);
+
+      btn.addEventListener('touchend', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showPage(btn.getAttribute('data-page'));
+      }, { passive: false, capture: true });
+    });
+  }
+
+  function boot() {
+    forceClickable();
+    closeOldMenus();
+    buildMobileMenu();
+    bindExistingButtons();
+
+    var activeButton = document.querySelector('.nav-btn.active[data-page]');
+    var firstPage = getPages()[0];
+
+    if (activeButton) {
+      showPage(activeButton.getAttribute('data-page'));
+    } else if (document.getElementById('page-dashboard')) {
+      showPage('dashboard');
+    } else if (firstPage) {
+      showPage(firstPage.id);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+
+  window.hawksShowPage = showPage;
+  window.hawksRebuildMenu = buildMobileMenu;
+})();
+</script>
 </body>
   <script>
 </html>
